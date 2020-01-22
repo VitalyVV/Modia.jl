@@ -32,7 +32,7 @@ using Unitful
 using ..ModiaLogging
 
 const PrintJSONsolved = false
-const showCode =         # Show the code for initialization and residual calculations
+const showCode =  false      # Show the code for initialization and residual calculations
 const logComputations = false # Insert logging of variable values in the code
 const callF = false
 const showJacobian = false
@@ -246,9 +246,17 @@ function prepare_ida(instance::Instance, first_F_args, initial_bindings::Abstrac
         s[Der(GetField(This(), name))] = der_name_of(name)
     end
 
+    parms = Dict()
     for (name, var) in params
-        s[GetField(This(), name)] = get_value(var)
+        eval((:($name = $var.value)))
+        parms[string(name)] = var.value
     end
+
+    for (name, var) in params
+        s[GetField(This(), name)] = name
+    end
+
+    # @show s
 
     s[time_global] = time_symbol
     s[simulationModel_global] = simulationModel_symbol
@@ -553,7 +561,7 @@ function prepare_ida(instance::Instance, first_F_args, initial_bindings::Abstrac
     end
 
     der_x0 = zeros(size(x0)) # todo: allow other initial guesses for der_x?
-    (F, eliminated_f, x0, der_x0, x_nominal, diffstates, params, states, state_sizes, state_offsets, eliminated_Ts, F_body)
+    (F, eliminated_f, x0, der_x0, x_nominal, diffstates, params, states, state_sizes, state_offsets, eliminated_Ts, F_body, parms)
 end
 
 # Temporary until we can store it in SimulationModel
@@ -602,7 +610,7 @@ function simulate_ida(instance::Instance, t::Vector{Float64},
     initial_bindings[simulationModel_symbol] = initial_m
 
     prep = prepare_ida(instance, [simulationModel_symbol], initial_bindings, store_eliminated=storeEliminated, need_eliminated_f=storeEliminated)
-    F, eliminated_f, x0, der_x0, x_nominal, diffstates, params, states, state_sizes, state_offsets, eliminated, F_body = prep
+    F, eliminated_f, x0, der_x0, x_nominal, diffstates, params, states, state_sizes, state_offsets, eliminated, F_body, parms = prep
 
     eliminated_results = Vector[Vector{T}() for T in values(eliminated)]
     # temporary until we can store it in simulationModel
