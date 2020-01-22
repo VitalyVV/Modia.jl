@@ -32,7 +32,7 @@ using Unitful
 using ..ModiaLogging
 
 const PrintJSONsolved = false
-const showCode = false        # Show the code for initialization and residual calculations
+const showCode =         # Show the code for initialization and residual calculations
 const logComputations = false # Insert logging of variable values in the code
 const callF = false
 const showJacobian = false
@@ -448,7 +448,7 @@ function prepare_ida(instance::Instance, first_F_args, initial_bindings::Abstrac
     append!(initial_body, instance.initial_post)
     # todo: avoid ... here too?
     push!(initial_body, :(Any[$(residuals...)], Any[$(eliminated...)]))
-    
+
     if showCode
         println("\nINITIALIZATION CODE")
         @show initial_ex
