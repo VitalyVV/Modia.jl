@@ -248,8 +248,13 @@ function prepare_ida(instance::Instance, first_F_args, initial_bindings::Abstrac
 
     parms = Dict()
     for (name, var) in params
-        eval((:($name = $var.value)))
-        parms[string(name)] = var.value
+        if isa(var, Real)
+            eval((:($name = $var)))
+        else
+            eval((:($name = $var.value)))
+            eval(:(global $name))
+            parms[string(name)] = var.value
+        end
     end
 
     for (name, var) in params
@@ -475,6 +480,9 @@ function prepare_ida(instance::Instance, first_F_args, initial_bindings::Abstrac
     end
 
     loglnModia("residual_size = ", residual_size)
+    #@show initial_residuals
+    #@show residual_size
+    #@show state_size
     @assert state_size == residual_size
 
     residual_offsets = cumsum(vcat([1], residual_sizes[1:end - 1]))
