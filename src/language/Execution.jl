@@ -231,7 +231,7 @@ else
     const letArgs = 2
 end
 
-function prepare_ida(instance::Instance, first_F_args, initial_bindings::AbstractDict{Symbol,Any}; store_eliminated=false, need_eliminated_f=false)
+function prepare_ida(instance::Instance, first_F_args, initial_bindings::AbstractDict{Symbol,Any}; store_eliminated=false, need_eliminated_f=false, time_symbol=time_symbol)
     proceed = zeros(Bool, 1)
     global F_Dict
 
@@ -245,6 +245,7 @@ function prepare_ida(instance::Instance, first_F_args, initial_bindings::Abstrac
         s[GetField(This(), name)] = name
         s[Der(GetField(This(), name))] = der_name_of(name)
     end
+    #@show vars
 
     parms = Dict()
     for (name, var) in params
@@ -316,18 +317,18 @@ function prepare_ida(instance::Instance, first_F_args, initial_bindings::Abstrac
             time = initial_bindings[time_symbol]
             s[time_global] = time
             condExpr = eq.args[1]
-            evalCond = substituteExpr(condExpr, eqs_of(instance), s)
+            evalCond = convert(Bool, substituteExpr(condExpr, eqs_of(instance), s))
             push!(modeConditions, evalCond)
             if time == 0.0
                 println("Mode condition: ", prettyPrint(condExpr), " is $evalCond at time=$time")
-                oldCond = evalCond
+                oldCond = convert(Bool, evalCond)
             end
 
             global oldCond
             if evalCond != oldCond
                 println("Mode change: ", prettyPrint(condExpr), " became ", evalCond, " at time ", time)
             end
-            oldCond = evalCond
+            oldCond = convert(Bool, evalCond)
 
             e = if evalCond; eq.args[2] else eq.args[3] end
             e = subs(s, e, true)
